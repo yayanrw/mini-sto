@@ -1,0 +1,232 @@
+@import 'tailwindcss';
+
+/* Font di-bundle lokal (bukan CDN): sinyal lapangan jelek, dan cPanel tak perlu
+   dependensi eksternal. Bricolage dipakai hemat — judul dan angka besar saja. */
+@import '@fontsource-variable/plus-jakarta-sans/wght.css';
+@import '@fontsource-variable/bricolage-grotesque/wght.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+/* Rujukan visual: nota kembar — buku struk karbon yang dipakai tiap toko
+   kelontong, dan yang persis digantikan aplikasi ini. */
+@theme {
+    --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Bricolage Grotesque Variable', 'Plus Jakarta Sans Variable', sans-serif;
+
+    --color-kertas: #fbf3e3;   /* latar halaman — manila */
+    --color-kartu: #fffdf8;    /* permukaan kartu */
+    --color-tinta: #2a2318;    /* teks utama — cokelat-hitam, bukan slate */
+    --color-daun: #17694a;     /* aksi utama, brand, angka terjual */
+    --color-kunyit: #8f5e00;   /* angka titipan/tambah — digelapkan sampai 5.5:1 di kartu */
+    --color-kunyit-terang: #e5a200; /* bidang besar, bukan teks kecil */
+    --color-bata: #b03a22;     /* error dan aksi merusak saja */
+}
+
+@layer base {
+    html {
+        background-color: var(--color-kertas);
+    }
+
+    body {
+        color: var(--color-tinta);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    h1, h2 {
+        font-family: var(--font-display);
+        letter-spacing: -0.02em;
+    }
+
+    /* Sebelumnya tidak ada indikator fokus sama sekali. */
+    :focus-visible {
+        outline: 2px solid var(--color-daun);
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
+
+    ::selection {
+        background-color: color-mix(in oklab, var(--color-kunyit-terang) 35%, transparent);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+/* CSS biasa dengan var(), bukan @apply — menghindari urutan spesifisitas yang
+   saling membatalkan antara .kartu dan .isian. */
+@layer components {
+    .kartu {
+        background-color: var(--color-kartu);
+        border: 1px solid color-mix(in oklab, var(--color-tinta) 12%, transparent);
+        border-radius: 1.25rem;
+        padding: 1rem;
+    }
+
+    .kartu-kosong {
+        border: 1px dashed color-mix(in oklab, var(--color-tinta) 22%, transparent);
+        border-radius: 1.25rem;
+        padding: 2rem 1.5rem;
+        text-align: center;
+    }
+
+    /* Target sentuh ≥44px, ukuran 17px: dipakai berdiri di depan warung,
+       satu tangan, sering di bawah matahari. */
+    .isian {
+        width: 100%;
+        background-color: var(--color-kartu);
+        color: var(--color-tinta);
+        border: 1px solid color-mix(in oklab, var(--color-tinta) 20%, transparent);
+        border-radius: 0.875rem;
+        padding: 0.625rem 0.75rem;
+        min-height: 2.75rem;
+        font-size: 1.0625rem;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .isian:focus {
+        outline: none;
+        border-color: var(--color-daun);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-daun) 18%, transparent);
+    }
+
+    .isian:disabled {
+        background-color: color-mix(in oklab, var(--color-tinta) 6%, transparent);
+        color: color-mix(in oklab, var(--color-tinta) 45%, transparent);
+    }
+
+    .isian-kecil {
+        min-height: 2.375rem;
+        font-size: 0.9375rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .isian-angka {
+        font-size: 1.375rem;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+    }
+
+    .tombol {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 2.75rem;
+        padding: 0.625rem 1rem;
+        border-radius: 0.875rem;
+        border: 1px solid color-mix(in oklab, var(--color-tinta) 20%, transparent);
+        background-color: var(--color-kartu);
+        color: var(--color-tinta);
+        font-weight: 500;
+        transition: background-color 0.15s ease;
+    }
+
+    .tombol:hover {
+        background-color: color-mix(in oklab, var(--color-tinta) 5%, var(--color-kartu));
+    }
+
+    .tombol-utama {
+        background-color: var(--color-daun);
+        border-color: var(--color-daun);
+        color: #fff;
+    }
+
+    .tombol-utama:hover {
+        background-color: color-mix(in oklab, #000 12%, var(--color-daun));
+    }
+
+    .tombol-utama:disabled {
+        opacity: 0.6;
+    }
+
+    /* 70%, bukan 60%: pada 60% rasionya 4.39:1 — di bawah AA. */
+    .label-kecil {
+        font-size: 0.75rem;
+        color: color-mix(in oklab, var(--color-tinta) 70%, transparent);
+    }
+
+    /* Signature: kartu kunjungan berbentuk nota. Garis putus di atas TERJUAL
+       mengkodekan satu-satunya ide non-obvious di domain ini — terjual itu
+       selisih, bukan angka yang diketik sales. */
+    .nota {
+        position: relative;
+        background-color: var(--color-kartu);
+        border: 1px solid color-mix(in oklab, var(--color-tinta) 12%, transparent);
+        border-bottom: none;
+        border-radius: 1.25rem 1.25rem 0 0;
+        padding: 1rem 1rem 1.125rem;
+        margin-bottom: 10px;
+    }
+
+    /* Tepi sobek. Kalau rewel di browser tertentu, garis .nota-pisah di dalam
+       kartu sudah membawa idenya sendiri. */
+    .nota::after {
+        content: '';
+        position: absolute;
+        left: -1px;
+        right: -1px;
+        bottom: -10px;
+        height: 10px;
+        background-color: var(--color-kartu);
+        border-inline: 1px solid color-mix(in oklab, var(--color-tinta) 12%, transparent);
+        -webkit-mask-image: radial-gradient(circle 6px at 6px 10px, transparent 0 5.5px, #000 6px);
+        mask-image: radial-gradient(circle 6px at 6px 10px, transparent 0 5.5px, #000 6px);
+        -webkit-mask-size: 12px 10px;
+        mask-size: 12px 10px;
+        -webkit-mask-repeat: repeat-x;
+        mask-repeat: repeat-x;
+    }
+
+    .nota-baris {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding-block: 0.3125rem;
+        font-size: 0.9375rem;
+    }
+
+    .nota-angka {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+    }
+
+    .nota-pisah {
+        border: 0;
+        border-top: 2px dashed color-mix(in oklab, var(--color-tinta) 25%, transparent);
+        margin-block: 0.625rem;
+    }
+
+    .nota-total {
+        font-family: var(--font-display);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    /* Tile OSM abu-kebiruan bentrok dengan kertas hangat. Cukup untuk
+       mendudukkannya di palet tanpa mengaburkan nama jalan. */
+    .leaflet-tile {
+        filter: sepia(0.18) saturate(0.9);
+    }
+
+    .leaflet-container {
+        background-color: var(--color-kertas);
+        font-family: var(--font-sans);
+    }
+}
+
+@utility angka-besar {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
