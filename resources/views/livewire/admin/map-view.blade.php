@@ -48,6 +48,7 @@
 
                     if (store.owner) lines.push(escape(store.owner));
                     if (store.address) lines.push(`<span style="color:#2a2318a0">${escape(store.address)}</span>`);
+                    if (store.created_by) lines.push(`<span style="color:#2a2318a0">Dibuat oleh: ${escape(store.created_by)}</span>`);
 
                     lines.push(store.last_visit
                         ? `Kunjungan terakhir: ${escape(store.last_visit)} (${escape(store.last_sales)})`

@@ -16,7 +16,7 @@ class MapView extends Component
         $markers = Store::query()
             ->where('active', true)
             ->whereNotNull('lat')
-            ->with(['latestVisit.items.product', 'latestVisit.user'])
+            ->with(['latestVisit.items.product', 'latestVisit.user', 'creator'])
             ->get()
             ->map(fn (Store $store) => [
                 'id' => $store->id,
@@ -25,6 +25,7 @@ class MapView extends Component
                 'address' => $store->address,
                 'lat' => $store->lat,
                 'lng' => $store->lng,
+                'created_by' => $store->creator?->name,
                 'last_visit' => $store->latestVisit?->visited_at->translatedFormat('d M Y'),
                 'last_sales' => $store->latestVisit?->user->name,
                 'stock' => $store->latestVisit

@@ -32,6 +32,8 @@ class VisitForm extends Component
 
     public function mount(Store $store): void
     {
+        abort_unless($store->created_by === auth()->id() || auth()->user()->isAdmin(), 403);
+
         $this->store = $store;
         $this->baseline = $store->currentStock()->map(fn ($qty) => (int) $qty)->all();
 

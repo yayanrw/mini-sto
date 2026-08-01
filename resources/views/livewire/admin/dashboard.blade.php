@@ -41,6 +41,26 @@
         </div>
 
         <div class="kartu">
+            <p class="font-display font-bold">Toko dibuat per sales</p>
+            @php($maxStores = $storesPerSales->max('count') ?: 1)
+            <ul class="mt-3 space-y-2.5">
+                @forelse ($storesPerSales as $row)
+                    <li>
+                        <div class="flex justify-between text-sm">
+                            <span class="truncate pr-2">{{ $row['user']->name }}</span>
+                            <span class="tabular-nums font-semibold">{{ number_format($row['count']) }}</span>
+                        </div>
+                        <div class="mt-1 h-2 rounded-full bg-tinta/8">
+                            <div class="h-2 rounded-full bg-kunyit-terang" style="width: {{ round($row['count'] / $maxStores * 100) }}%"></div>
+                        </div>
+                    </li>
+                @empty
+                    <li class="text-sm text-tinta/70">Belum ada toko yang dibuat.</li>
+                @endforelse
+            </ul>
+        </div>
+
+        <div class="kartu">
             <p class="font-display font-bold">Toko perlu dikunjungi</p>
             <p class="label-kecil">Belum dikunjungi 30 hari atau lebih</p>
             <ul class="mt-3 divide-y divide-tinta/8">

@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Store;
+use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitItem;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,18 @@ class Dashboard extends Component
             ->sortByDesc(fn ($row) => $row['days'] ?? PHP_INT_MAX)
             ->take(10);
 
+        $storesBySales = Store::query()
+            ->whereNotNull('created_by')
+            ->groupBy('created_by')
+            ->pluck(DB::raw('COUNT(*)'), 'created_by');
+
+        $storesPerSales = User::query()
+            ->whereIn('id', $storesBySales->keys())
+            ->get()
+            ->map(fn (User $user) => ['user' => $user, 'count' => (int) $storesBySales[$user->id]])
+            ->sortByDesc('count')
+            ->values();
+
         return view('livewire.admin.dashboard', [
             'totalStores' => Store::where('active', true)->count(),
             'newStores' => Store::where('created_at', '>=', $monthStart)->count(),
@@ -53,6 +66,7 @@ class Dashboard extends Component
             'added' => (int) $monthly->added,
             'topProducts' => $topProducts,
             'stale' => $stale,
+            'storesPerSales' => $storesPerSales,
         ]);
     }
 }

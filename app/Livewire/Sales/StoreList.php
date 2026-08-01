@@ -37,6 +37,7 @@ class StoreList extends Component
     {
         $query = Store::query()
             ->where('active', true)
+            ->where('created_by', auth()->id())
             ->with(['latestVisit']);
 
         if ($this->search !== '') {

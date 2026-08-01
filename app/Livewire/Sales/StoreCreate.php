@@ -36,6 +36,8 @@ class StoreCreate extends Component
             return;
         }
 
+        abort_unless($store->created_by === auth()->id() || auth()->user()->isAdmin(), 403);
+
         $this->editing = $store;
         $this->name = $store->name;
         $this->owner_name = $store->owner_name ?? '';
