@@ -89,9 +89,7 @@
                              maxZoom: 19,
                              attribution: '&copy; OpenStreetMap'
                          }).addTo(this.map)
-                         this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map)
-                         this.marker.on('dragend', e => this.push(e.target.getLatLng().lat, e.target.getLatLng().lng))
-                         this.map.on('click', e => this.place(e.latlng.lat, e.latlng.lng, this.map.getZoom()))
+                         this.marker = L.marker([lat, lng]).addTo(this.map)
                          if (!@js($lat)) this.locate()
                      }
                  }"
@@ -101,16 +99,16 @@
                 <div x-ref="map" class="h-56 w-full rounded-xl border border-tinta/15 z-0"></div>
             </div>
 
-            <p class="mt-2 label-kecil">Ketuk peta atau geser pin untuk memindahkan titik.</p>
+            <p class="mt-2 label-kecil">Titik diambil dari lokasi GPS — ketuk "Ambil GPS" untuk memperbarui.</p>
 
             <div class="mt-3 grid grid-cols-2 gap-3">
                 <div>
                     <label class="block label-kecil mb-1">Latitude</label>
-                    <input wire:model="lat" type="text" inputmode="decimal" class="isian isian-kecil">
+                    <input wire:model="lat" type="text" readonly tabindex="-1" class="isian isian-kecil">
                 </div>
                 <div>
                     <label class="block label-kecil mb-1">Longitude</label>
-                    <input wire:model="lng" type="text" inputmode="decimal" class="isian isian-kecil">
+                    <input wire:model="lng" type="text" readonly tabindex="-1" class="isian isian-kecil">
                 </div>
             </div>
             @error('lat') <p class="mt-1 text-sm text-bata">{{ $message }}</p> @enderror
