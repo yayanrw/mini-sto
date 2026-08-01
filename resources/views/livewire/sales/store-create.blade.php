@@ -30,10 +30,24 @@
                 <textarea wire:model="address" rows="2" class="isian"></textarea>
             </div>
 
-            <div>
+            <div x-data="{ preview: null }">
                 <label class="block text-sm font-medium mb-1.5">Foto toko <span class="text-bata">*</span></label>
-                <input wire:model="photo" type="file" accept="image/*" capture="environment"
-                       class="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-tinta/5 file:px-3 file:py-2 file:text-sm file:font-medium file:text-tinta">
+                <label
+                    class="kartu-kosong flex flex-col items-center justify-center gap-1.5 cursor-pointer overflow-hidden"
+                    :class="preview && 'p-0 border-solid'">
+                    <template x-if="!preview">
+                        <div class="flex flex-col items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="size-7 opacity-60">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9m0 0-3 3m3-3 3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3.75 3.75 0 0 1 4.132 6.144 4.5 4.5 0 0 1-.917 8.79H6.75Z" />
+                            </svg>
+                            <span class="text-sm font-medium">Ketuk untuk pilih foto</span>
+                            <span class="label-kecil">atau ambil dari kamera</span>
+                        </div>
+                    </template>
+                    <img x-show="preview" :src="preview" class="w-full aspect-video object-cover rounded-[inherit]">
+                    <input wire:model="photo" type="file" accept="image/*" capture="environment" class="sr-only"
+                           @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null">
+                </label>
                 <div wire:loading wire:target="photo" class="mt-1 label-kecil">Mengunggah…</div>
                 @error('photo') <p class="mt-1 text-sm text-bata">{{ $message }}</p> @enderror
             </div>
@@ -99,7 +113,7 @@
         </div>
 
         <button class="tombol tombol-utama w-full py-3.5 text-base" wire:loading.attr="disabled">
-            <span wire:loading.remove wire:target="save">Simpan &amp; catat titipan</span>
+            <span wire:loading.remove wire:target="save">Simpan</span>
             <span wire:loading wire:target="save">Menyimpan…</span>
         </button>
     </form>
