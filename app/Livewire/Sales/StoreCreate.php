@@ -55,7 +55,7 @@ class StoreCreate extends Component
 
     protected function rules(): array
     {
-        $required = $this->editing ? 'nullable' : 'required';
+        $required = ($this->editing || auth()->user()->isAdmin()) ? 'nullable' : 'required';
 
         return [
             'name' => 'required|string|max:120',
@@ -85,18 +85,28 @@ class StoreCreate extends Component
             $attributes['photo_path'] = $this->photo->store('stores', 'public');
         }
 
+        $isAdmin = auth()->user()->isAdmin();
+
         if ($this->editing) {
             $this->editing->update($attributes);
 
             session()->flash('status', "Toko “{$this->editing->name}” diperbarui.");
 
-            return $this->redirectRoute('visits.create', $this->editing, navigate: true);
+            return $isAdmin
+                ? $this->redirectRoute('admin.stores.show', $this->editing, navigate: true)
+                : $this->redirectRoute('visits.create', $this->editing, navigate: true);
         }
 
         $store = Store::create([
             ...$attributes,
             'created_by' => auth()->id(),
         ]);
+
+        if ($isAdmin) {
+            session()->flash('status', "Toko “{$store->name}” tersimpan.");
+
+            return $this->redirectRoute('admin.stores.show', $store, navigate: true);
+        }
 
         session()->flash('status', "Toko “{$store->name}” tersimpan. Lanjut catat titipan produk.");
 

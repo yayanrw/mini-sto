@@ -1,8 +1,11 @@
 <div class="space-y-4">
     <div class="flex items-baseline justify-between gap-3">
         <h1 class="text-2xl font-bold tracking-tight">Toko</h1>
-        <input type="search" wire:model.live.debounce.400ms="search" placeholder="Cari toko"
-               class="isian isian-kecil w-auto">
+        <div class="flex items-center gap-2">
+            <input type="search" wire:model.live.debounce.400ms="search" placeholder="Cari toko"
+                   class="isian isian-kecil w-auto">
+            <a href="{{ route('stores.create') }}" class="tombol tombol-utama text-sm whitespace-nowrap">+ Tambah Toko</a>
+        </div>
     </div>
 
     @if (session('status'))
@@ -91,8 +94,9 @@
                                 {{ $store->active ? 'Aktif' : 'Nonaktif' }}
                             </span>
                         </td>
-                        <td class="px-4 py-2.5 text-right">
-                            <button wire:click="edit({{ $store->id }})" class="text-sm text-daun font-medium hover:underline">Ubah</button>
+                        <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                            <a href="{{ route('admin.stores.show', $store) }}" class="text-sm text-tinta/70 font-medium hover:underline">Detail</a>
+                            <button wire:click="edit({{ $store->id }})" class="ml-3 text-sm text-daun font-medium hover:underline">Ubah</button>
                         </td>
                     </tr>
                 @empty
