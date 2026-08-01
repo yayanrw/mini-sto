@@ -4,8 +4,9 @@
         <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     @endpush
 
-    <a href="{{ route('stores.index') }}" class="text-sm text-tinta/70 hover:text-tinta">&larr; Kembali</a>
-    <h1 class="mt-1 text-2xl font-bold tracking-tight">Toko Baru</h1>
+    <a href="{{ $editing ? route('visits.create', $editing) : route('stores.index') }}"
+       class="text-sm text-tinta/70 hover:text-tinta">&larr; Kembali</a>
+    <h1 class="mt-1 text-2xl font-bold tracking-tight">{{ $editing ? 'Ubah Toko' : 'Toko Baru' }}</h1>
 
     <form wire:submit="save" class="mt-4 space-y-3">
         <div class="kartu space-y-4">
@@ -30,8 +31,10 @@
                 <textarea wire:model="address" rows="2" class="isian"></textarea>
             </div>
 
-            <div x-data="{ preview: null }">
-                <label class="block text-sm font-medium mb-1.5">Foto toko <span class="text-bata">*</span></label>
+            <div x-data="{ preview: @js($editing?->photo_path ? \Illuminate\Support\Facades\Storage::url($editing->photo_path) : null) }">
+                <label class="block text-sm font-medium mb-1.5">
+                    Foto toko @unless($editing) <span class="text-bata">*</span> @endunless
+                </label>
                 <label
                     class="kartu-kosong flex flex-col items-center justify-center gap-1.5 cursor-pointer overflow-hidden"
                     :class="preview && 'p-0 border-solid'">
@@ -55,7 +58,9 @@
 
         <div class="kartu">
             <div class="flex items-center justify-between">
-                <label class="text-sm font-medium">Titik lokasi <span class="text-bata">*</span></label>
+                <label class="text-sm font-medium">
+                    Titik lokasi @unless($editing) <span class="text-bata">*</span> @endunless
+                </label>
                 <button type="button" x-data @click="$dispatch('locate-me')" class="text-sm text-daun font-medium underline">Ambil GPS</button>
             </div>
 

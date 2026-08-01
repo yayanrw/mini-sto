@@ -26,6 +26,7 @@ Route::post('logout', [AuthController::class, 'destroy'])->name('logout')->middl
 Route::middleware('auth')->group(function () {
     Route::get('/', StoreList::class)->name('stores.index');
     Route::get('toko/baru', StoreCreate::class)->name('stores.create');
+    Route::get('toko/{store}/ubah', StoreCreate::class)->name('stores.edit');
     Route::get('toko/{store}/kunjungan', VisitForm::class)->name('visits.create');
     Route::get('kunjungan', VisitHistory::class)->name('visits.index');
     Route::get('profil', Profile::class)->name('profile');

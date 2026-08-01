@@ -53,12 +53,18 @@
                     <span class="nota-angka">{{ $before }} <span class="label-kecil">{{ $product->unit }}</span></span>
                 </div>
 
-                <label class="nota-baris">
-                    <span class="text-tinta/70">Sisa dihitung</span>
-                    <input wire:model.live="items.{{ $productId }}.qty_found" type="number" min="0" max="{{ $before }}"
-                           inputmode="numeric" placeholder="0"
-                           class="isian isian-angka w-28 text-right">
-                </label>
+                <div class="nota-baris">
+                    <span class="text-tinta/70">Sisa sekarang</span>
+                    <span class="flex items-center gap-1.5">
+                        <button type="button" wire:click="$set('items.{{ $productId }}.qty_found', {{ max($found - 1, 0) }})"
+                                class="tombol size-9 !min-h-9 shrink-0 !p-0 text-lg leading-none">&minus;</button>
+                        <input wire:model.live="items.{{ $productId }}.qty_found" type="number" min="0" max="{{ $before }}"
+                               inputmode="numeric" placeholder="0"
+                               class="isian isian-angka w-20 text-right">
+                        <button type="button" wire:click="$set('items.{{ $productId }}.qty_found', {{ min($found + 1, $before) }})"
+                                class="tombol size-9 !min-h-9 shrink-0 !p-0 text-lg leading-none">&plus;</button>
+                    </span>
+                </div>
 
                 <hr class="nota-pisah">
 
@@ -97,9 +103,16 @@
                     </label>
 
                     @if ($checked)
-                        <input wire:model.live="items.{{ $product->id }}.qty_added" type="number" min="0"
-                               inputmode="numeric" placeholder="0"
-                               class="isian isian-angka isian-kecil w-24 text-right">
+                        @php($currentAdded = (int) ($items[$product->id]['qty_added'] ?? 0))
+                        <span class="flex items-center gap-1">
+                            <button type="button" wire:click="$set('items.{{ $product->id }}.qty_added', {{ max($currentAdded - 1, 0) }})"
+                                    class="tombol size-8 !min-h-8 shrink-0 !p-0 text-base leading-none">&minus;</button>
+                            <input wire:model.live="items.{{ $product->id }}.qty_added" type="number" min="0"
+                                   inputmode="numeric" placeholder="0"
+                                   class="isian isian-angka isian-kecil w-16 text-right">
+                            <button type="button" wire:click="$set('items.{{ $product->id }}.qty_added', {{ $currentAdded + 1 }})"
+                                    class="tombol size-8 !min-h-8 shrink-0 !p-0 text-base leading-none">&plus;</button>
+                        </span>
                     @endif
                 </div>
                 @error("items.{$product->id}") <p class="mt-1 text-sm text-bata">{{ $message }}</p> @enderror
@@ -132,7 +145,24 @@
             </div>
             <div class="nota-baris">
                 <span class="text-tinta/70">No. HP</span>
-                <span class="nota-angka">{{ $store->phone ?: '—' }}</span>
+                @if ($store->phone)
+                    <span class="flex items-center gap-2" x-data="{ copied: false }">
+                        <span class="nota-angka">{{ $store->phone }}</span>
+                        <button type="button"
+                                @click="navigator.clipboard.writeText(@js($store->phone)); copied = true; setTimeout(() => copied = false, 1500)"
+                                class="tombol size-8 !min-h-8 shrink-0 !p-0">
+                            <svg x-show="!copied" class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <rect x="9" y="9" width="11" height="11" rx="2"/>
+                                <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
+                            </svg>
+                            <svg x-show="copied" class="size-3.5 text-daun" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M20 6 9 17l-5-5"/>
+                            </svg>
+                        </button>
+                    </span>
+                @else
+                    <span class="nota-angka">—</span>
+                @endif
             </div>
             <div class="nota-baris items-start">
                 <span class="text-tinta/70">Alamat</span>
@@ -151,6 +181,13 @@
             @else
                 <p class="text-xs text-kunyit">Toko ini belum punya titik lokasi. Admin bisa mengisinya dari menu Toko.</p>
             @endif
+
+            <a href="{{ route('stores.edit', $store) }}" class="tombol w-full text-sm">
+                <svg class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                </svg>
+                Ubah Toko
+            </a>
         </div>
 
         <p class="nota-total">Riwayat kunjungan</p>

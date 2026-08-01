@@ -5,36 +5,45 @@ namespace App\Livewire\Sales;
 use App\Models\Store;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 #[Layout('components.layout')]
-#[Title('Toko Baru')]
+#[Title('Toko')]
 class StoreCreate extends Component
 {
     use WithFileUploads;
 
-    #[Validate('required|string|max:120')]
+    public ?Store $editing = null;
+
     public string $name = '';
 
-    #[Validate('nullable|string|max:120')]
     public string $owner_name = '';
 
-    #[Validate('nullable|string|max:30')]
     public string $phone = '';
 
-    #[Validate('nullable|string|max:500')]
     public string $address = '';
 
-    #[Validate('required|numeric|between:-90,90')]
     public ?string $lat = null;
 
-    #[Validate('required|numeric|between:-180,180')]
     public ?string $lng = null;
 
-    #[Validate('required|image|max:4096')]
     public $photo = null;
+
+    public function mount(?Store $store = null): void
+    {
+        if (! $store) {
+            return;
+        }
+
+        $this->editing = $store;
+        $this->name = $store->name;
+        $this->owner_name = $store->owner_name ?? '';
+        $this->phone = $store->phone ?? '';
+        $this->address = $store->address ?? '';
+        $this->lat = $store->lat !== null ? (string) $store->lat : null;
+        $this->lng = $store->lng !== null ? (string) $store->lng : null;
+    }
 
     public function setLocation(float $lat, float $lng): void
     {
@@ -42,18 +51,48 @@ class StoreCreate extends Component
         $this->lng = (string) round($lng, 7);
     }
 
+    protected function rules(): array
+    {
+        $required = $this->editing ? 'nullable' : 'required';
+
+        return [
+            'name' => 'required|string|max:120',
+            'owner_name' => 'nullable|string|max:120',
+            'phone' => 'nullable|string|max:30',
+            'address' => 'nullable|string|max:500',
+            'lat' => "{$required}|numeric|between:-90,90",
+            'lng' => "{$required}|numeric|between:-180,180",
+            'photo' => "{$required}|image|max:4096",
+        ];
+    }
+
     public function save()
     {
         $data = $this->validate();
 
-        $store = Store::create([
+        $attributes = [
             'name' => $data['name'],
             'owner_name' => $data['owner_name'] ?: null,
             'phone' => $data['phone'] ?: null,
             'address' => $data['address'] ?: null,
             'lat' => $data['lat'] !== null && $data['lat'] !== '' ? $data['lat'] : null,
             'lng' => $data['lng'] !== null && $data['lng'] !== '' ? $data['lng'] : null,
-            'photo_path' => $this->photo?->store('stores', 'public'),
+        ];
+
+        if ($this->photo) {
+            $attributes['photo_path'] = $this->photo->store('stores', 'public');
+        }
+
+        if ($this->editing) {
+            $this->editing->update($attributes);
+
+            session()->flash('status', "Toko “{$this->editing->name}” diperbarui.");
+
+            return $this->redirectRoute('visits.create', $this->editing, navigate: true);
+        }
+
+        $store = Store::create([
+            ...$attributes,
             'created_by' => auth()->id(),
         ]);
 
