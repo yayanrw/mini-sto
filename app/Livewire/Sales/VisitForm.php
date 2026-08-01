@@ -102,8 +102,15 @@ class VisitForm extends Component
     {
         $products = Product::active()->orderBy('name')->get()->keyBy('id');
 
+        $history = $this->store->visits()
+            ->with('items.product')
+            ->latest('visited_at')
+            ->limit(20)
+            ->get();
+
         return view('livewire.sales.visit-form', [
             'products' => $products,
+            'history' => $history,
         ]);
     }
 }
