@@ -97,8 +97,31 @@
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
                             <a href="{{ route('admin.stores.show', $store) }}" class="text-sm text-tinta/70 font-medium hover:underline">Detail</a>
                             <button wire:click="edit({{ $store->id }})" class="ml-3 text-sm text-daun font-medium hover:underline">Ubah</button>
+                            <button wire:click="startMove({{ $store->id }})" class="ml-3 text-sm text-kunyit font-medium hover:underline">Pindahkan</button>
                         </td>
                     </tr>
+                    @if ($movingId === $store->id)
+                        <tr wire:key="move-{{ $store->id }}">
+                            <td colspan="7" class="px-4 py-3 bg-kunyit/5">
+                                <form wire:submit="moveStore" class="flex flex-wrap items-end gap-3">
+                                    <p class="w-full text-sm">
+                                        Pindahkan <strong>{{ $store->name }}</strong> ke sales:
+                                    </p>
+                                    <div>
+                                        <select wire:model="moveToId" class="isian isian-kecil">
+                                            <option value="">Pilih sales tujuan</option>
+                                            @foreach ($moveTargets as $target)
+                                                <option value="{{ $target->id }}" @selected($store->created_by === $target->id)>{{ $target->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('moveToId') <p class="mt-1 text-xs text-bata">{{ $message }}</p> @enderror
+                                    </div>
+                                    <button class="tombol tombol-utama text-sm">Pindahkan</button>
+                                    <button type="button" wire:click="cancelMove" class="tombol text-sm">Batal</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr><td colspan="7" class="px-4 py-8 text-center text-tinta/70">Belum ada toko. Sales menambahkannya dari aplikasi.</td></tr>
                 @endforelse

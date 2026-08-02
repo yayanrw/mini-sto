@@ -1,6 +1,6 @@
 <x-layout title="Masuk">
     <div class="w-full max-w-sm">
-        <h1 class="text-3xl font-bold tracking-tight text-center">mini-sto</h1>
+        <h1 class="text-3xl font-bold tracking-tight text-center">MINI SALES TAKING ORDER</h1>
         <p class="mt-1 text-center text-sm text-tinta/70">Buku titipan produk, versi saku</p>
 
         <form method="POST" action="{{ route('login') }}" class="kartu mt-8 space-y-4">

@@ -7,6 +7,7 @@ use App\Livewire\Admin\MapView;
 use App\Livewire\Admin\Performance;
 use App\Livewire\Admin\Products;
 use App\Livewire\Admin\Reports;
+use App\Livewire\Admin\Sales as AdminSales;
 use App\Livewire\Admin\StoreShow;
 use App\Livewire\Admin\Stores as AdminStores;
 use App\Livewire\Admin\Users;
@@ -42,5 +43,6 @@ Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group
     Route::get('toko', AdminStores::class)->name('stores');
     Route::get('toko/{store}', StoreShow::class)->name('stores.show');
     Route::get('produk', Products::class)->name('products');
+    Route::get('sales', AdminSales::class)->name('sales');
     Route::get('pengguna', Users::class)->name('users');
 });

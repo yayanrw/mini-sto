@@ -3,6 +3,8 @@
 namespace App\Livewire\Sales;
 
 use App\Models\Store;
+use App\Models\User;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -30,6 +32,8 @@ class StoreCreate extends Component
 
     public $photo = null;
 
+    public ?int $assignedTo = null;
+
     public function mount(?Store $store = null): void
     {
         if (! $store) {
@@ -45,6 +49,7 @@ class StoreCreate extends Component
         $this->address = $store->address ?? '';
         $this->lat = $store->lat !== null ? (string) $store->lat : null;
         $this->lng = $store->lng !== null ? (string) $store->lng : null;
+        $this->assignedTo = $store->creator?->role === 'sales' ? $store->created_by : null;
     }
 
     public function setLocation(float $lat, float $lng): void
@@ -55,9 +60,10 @@ class StoreCreate extends Component
 
     protected function rules(): array
     {
-        $required = ($this->editing || auth()->user()->isAdmin()) ? 'nullable' : 'required';
+        $isAdmin = auth()->user()->isAdmin();
+        $required = ($this->editing || $isAdmin) ? 'nullable' : 'required';
 
-        return [
+        $rules = [
             'name' => 'required|string|max:120',
             'owner_name' => 'nullable|string|max:120',
             'phone' => 'nullable|string|max:30',
@@ -66,6 +72,12 @@ class StoreCreate extends Component
             'lng' => "{$required}|numeric|between:-180,180",
             'photo' => "{$required}|image|max:4096",
         ];
+
+        if ($isAdmin) {
+            $rules['assignedTo'] = ['required', Rule::exists('users', 'id')->where('role', 'sales')];
+        }
+
+        return $rules;
     }
 
     public function save()
@@ -87,6 +99,10 @@ class StoreCreate extends Component
 
         $isAdmin = auth()->user()->isAdmin();
 
+        if ($isAdmin) {
+            $attributes['created_by'] = $data['assignedTo'];
+        }
+
         if ($this->editing) {
             $this->editing->update($attributes);
 
@@ -99,7 +115,7 @@ class StoreCreate extends Component
 
         $store = Store::create([
             ...$attributes,
-            'created_by' => auth()->id(),
+            'created_by' => $attributes['created_by'] ?? auth()->id(),
         ]);
 
         if ($isAdmin) {
@@ -115,6 +131,10 @@ class StoreCreate extends Component
 
     public function render()
     {
-        return view('livewire.sales.store-create');
+        return view('livewire.sales.store-create', [
+            'salesOptions' => auth()->user()->isAdmin()
+                ? User::where('role', 'sales')->orderBy('name')->get()
+                : collect(),
+        ]);
     }
 }

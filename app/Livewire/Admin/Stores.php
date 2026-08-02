@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Store;
+use App\Models\User;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -33,6 +35,10 @@ class Stores extends Component
     public string $lng = '';
 
     public bool $active = true;
+
+    public ?int $movingId = null;
+
+    public ?int $moveToId = null;
 
     public function updatedSearch(): void
     {
@@ -84,6 +90,36 @@ class Stores extends Component
         session()->flash('status', 'Toko diperbarui.');
     }
 
+    public function startMove(int $id): void
+    {
+        $this->movingId = $id;
+        $this->moveToId = null;
+        $this->resetValidation();
+    }
+
+    public function cancelMove(): void
+    {
+        $this->movingId = null;
+        $this->moveToId = null;
+        $this->resetValidation();
+    }
+
+    public function moveStore(): void
+    {
+        $data = $this->validate([
+            'moveToId' => ['required', Rule::exists('users', 'id')->where('role', 'sales')],
+        ]);
+
+        $store = Store::findOrFail($this->movingId);
+        $to = User::where('role', 'sales')->findOrFail($data['moveToId']);
+
+        $store->update(['created_by' => $to->id]);
+
+        session()->flash('status', "Toko “{$store->name}” dipindahkan ke {$to->name}.");
+
+        $this->cancelMove();
+    }
+
     public function render()
     {
         $stores = Store::query()
@@ -96,6 +132,11 @@ class Stores extends Component
             ->orderBy('name')
             ->paginate(20);
 
-        return view('livewire.admin.stores', ['stores' => $stores]);
+        return view('livewire.admin.stores', [
+            'stores' => $stores,
+            'moveTargets' => $this->movingId
+                ? User::where('role', 'sales')->orderBy('name')->get()
+                : collect(),
+        ]);
     }
 }

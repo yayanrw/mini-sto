@@ -16,6 +16,19 @@
 
     <form wire:submit="save" class="mt-4 space-y-3">
         <div class="kartu space-y-4">
+            @if ($isAdmin)
+                <div>
+                    <label class="block text-sm font-medium mb-1.5">Ditugaskan ke sales <span class="text-bata">*</span></label>
+                    <select wire:model="assignedTo" class="isian">
+                        <option value="">Pilih sales</option>
+                        @foreach ($salesOptions as $salesUser)
+                            <option value="{{ $salesUser->id }}">{{ $salesUser->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('assignedTo') <p class="mt-1 text-sm text-bata">{{ $message }}</p> @enderror
+                </div>
+            @endif
+
             <div>
                 <label class="block text-sm font-medium mb-1.5">Nama toko <span class="text-bata">*</span></label>
                 <input wire:model="name" type="text" required class="isian">
