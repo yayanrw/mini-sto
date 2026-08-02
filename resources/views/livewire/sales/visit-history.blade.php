@@ -13,6 +13,13 @@
                     <span class="shrink-0 label-kecil">{{ $visit->visited_at->translatedFormat('d M Y · H:i') }}</span>
                 </div>
 
+                @if ($visit->store->photo_path)
+                    <a href="{{ \Illuminate\Support\Facades\Storage::url($visit->store->photo_path) }}" target="_blank" rel="noopener" class="block mt-2">
+                        <img src="{{ \Illuminate\Support\Facades\Storage::url($visit->store->photo_path) }}" alt="Foto {{ $visit->store->name }}"
+                             class="w-full aspect-video object-cover rounded-xl">
+                    </a>
+                @endif
+
                 <hr class="nota-pisah">
 
                 @foreach ($visit->items as $item)

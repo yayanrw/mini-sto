@@ -13,16 +13,21 @@
         <p class="mt-3 rounded-xl bg-daun/10 border border-daun/25 text-daun text-sm px-3 py-2">{{ session('status') }}</p>
     @endif
 
-    <div class="mt-4 grid grid-cols-2 gap-2">
+    <div class="mt-4 grid grid-cols-3 gap-2">
         <button type="button" @click="tab = 'kunjungan'"
                 class="tombol justify-center text-sm"
                 :class="tab === 'kunjungan' && 'tombol-utama'">
             Kunjungan
         </button>
+        <button type="button" @click="tab = 'riwayat'"
+                class="tombol justify-center text-sm"
+                :class="tab === 'riwayat' && 'tombol-utama'">
+            Riwayat Kunjungan
+        </button>
         <button type="button" @click="tab = 'detail'"
                 class="tombol justify-center text-sm"
                 :class="tab === 'detail' && 'tombol-utama'">
-            Detail &amp; Riwayat
+            Detail
         </button>
     </div>
 
@@ -132,11 +137,47 @@
     </form>
     </div>
 
+    <div x-show="tab === 'riwayat'" class="mt-4 space-y-3">
+        <p class="nota-total">Riwayat kunjungan</p>
+
+        @forelse ($history as $visit)
+            <div class="nota mb-4" wire:key="riwayat-{{ $visit->id }}">
+                <div class="flex items-baseline justify-between gap-3">
+                    <span class="label-kecil">{{ $visit->visited_at->translatedFormat('d M Y · H:i') }}</span>
+                </div>
+
+                <hr class="nota-pisah">
+
+                @foreach ($visit->items as $item)
+                    <div class="nota-baris items-start">
+                        <span class="text-tinta/70 truncate pr-2">{{ $item->product->name }}</span>
+                        <span class="shrink-0 text-right">
+                            <span class="nota-angka text-daun">{{ $item->qty_sold }}</span>
+                            <span class="label-kecil">terjual</span>
+                        </span>
+                    </div>
+                    <div class="label-kecil -mt-1 pb-1">
+                        sisa {{ $item->qty_found }} · tambah {{ $item->qty_added }} · ditinggal {{ $item->qty_left }}
+                    </div>
+                @endforeach
+
+                @if ($visit->note)
+                    <hr class="nota-pisah">
+                    <p class="text-sm text-tinta/70 italic">{{ $visit->note }}</p>
+                @endif
+            </div>
+        @empty
+            <p class="kartu-kosong text-sm text-tinta/70">Belum ada kunjungan tercatat untuk toko ini.</p>
+        @endforelse
+    </div>
+
     <div x-show="tab === 'detail'" class="mt-4 space-y-3">
         <div class="kartu space-y-3">
             @if ($store->photo_path)
-                <img src="{{ \Illuminate\Support\Facades\Storage::url($store->photo_path) }}" alt="Foto {{ $store->name }}"
-                     class="w-full aspect-video object-cover rounded-xl">
+                <a href="{{ \Illuminate\Support\Facades\Storage::url($store->photo_path) }}" target="_blank" rel="noopener">
+                    <img src="{{ \Illuminate\Support\Facades\Storage::url($store->photo_path) }}" alt="Foto {{ $store->name }}"
+                         class="w-full aspect-video object-cover rounded-xl">
+                </a>
             @endif
 
             <div class="nota-baris">
@@ -189,37 +230,5 @@
                 Ubah Toko
             </a>
         </div>
-
-        <p class="nota-total">Riwayat kunjungan</p>
-
-        @forelse ($history as $visit)
-            <div class="nota mb-4" wire:key="riwayat-{{ $visit->id }}">
-                <div class="flex items-baseline justify-between gap-3">
-                    <span class="label-kecil">{{ $visit->visited_at->translatedFormat('d M Y · H:i') }}</span>
-                </div>
-
-                <hr class="nota-pisah">
-
-                @foreach ($visit->items as $item)
-                    <div class="nota-baris items-start">
-                        <span class="text-tinta/70 truncate pr-2">{{ $item->product->name }}</span>
-                        <span class="shrink-0 text-right">
-                            <span class="nota-angka text-daun">{{ $item->qty_sold }}</span>
-                            <span class="label-kecil">terjual</span>
-                        </span>
-                    </div>
-                    <div class="label-kecil -mt-1 pb-1">
-                        sisa {{ $item->qty_found }} · tambah {{ $item->qty_added }} · ditinggal {{ $item->qty_left }}
-                    </div>
-                @endforeach
-
-                @if ($visit->note)
-                    <hr class="nota-pisah">
-                    <p class="text-sm text-tinta/70 italic">{{ $visit->note }}</p>
-                @endif
-            </div>
-        @empty
-            <p class="kartu-kosong text-sm text-tinta/70">Belum ada kunjungan tercatat untuk toko ini.</p>
-        @endforelse
     </div>
 </div>
