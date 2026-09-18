@@ -40,6 +40,8 @@ class Stores extends Component
 
     public ?int $moveToId = null;
 
+    public bool $trashed = false;
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -120,9 +122,32 @@ class Stores extends Component
         $this->cancelMove();
     }
 
+    public function toggleTrashed(): void
+    {
+        $this->trashed = ! $this->trashed;
+        $this->resetPage();
+    }
+
+    public function delete(int $id): void
+    {
+        $store = Store::findOrFail($id);
+        $store->delete();
+
+        session()->flash('status', "Toko \"{$store->name}\" dihapus.");
+    }
+
+    public function restore(int $id): void
+    {
+        $store = Store::onlyTrashed()->findOrFail($id);
+        $store->restore();
+
+        session()->flash('status', "Toko \"{$store->name}\" dipulihkan.");
+    }
+
     public function render()
     {
         $stores = Store::query()
+            ->when($this->trashed, fn ($q) => $q->onlyTrashed())
             ->with(['latestVisit.user', 'creator'])
             ->when($this->search !== '', fn ($q) => $q->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")

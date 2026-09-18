@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Visit;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -30,8 +31,8 @@ class Performance extends Component
     public function render()
     {
         $range = [
-            \Carbon\Carbon::parse($this->from)->startOfDay(),
-            \Carbon\Carbon::parse($this->to)->endOfDay(),
+            Carbon::parse($this->from)->startOfDay(),
+            Carbon::parse($this->to)->endOfDay(),
         ];
 
         $visitStats = Visit::query()

@@ -4,6 +4,9 @@
         <div class="flex items-center gap-2">
             <input type="search" wire:model.live.debounce.400ms="search" placeholder="Cari toko"
                    class="isian isian-kecil w-auto">
+            <button type="button" wire:click="toggleTrashed" class="tombol text-sm whitespace-nowrap">
+                {{ $trashed ? 'Lihat aktif' : 'Lihat sampah' }}
+            </button>
             <a href="{{ route('stores.create') }}" class="tombol tombol-utama text-sm whitespace-nowrap">+ Tambah Toko</a>
         </div>
     </div>
@@ -12,8 +15,12 @@
         <p class="rounded-xl bg-daun/10 border border-daun/25 text-daun text-sm px-3 py-2">{{ session('status') }}</p>
     @endif
 
+    @if (session('error'))
+        <p class="rounded-xl bg-bata/10 border border-bata/25 text-bata text-sm px-3 py-2">{{ session('error') }}</p>
+    @endif
+
     @if ($editingId)
-        <form wire:submit="save" class="kartu border-daun/40 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+        <form wire:submit="save" wire:confirm="Simpan perubahan ini?" class="kartu border-daun/40 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
             <div class="lg:col-span-4 font-display font-bold">Ubah toko</div>
             <div>
                 <label class="block label-kecil mb-1">Nama</label>
@@ -96,8 +103,15 @@
                         </td>
                         <td class="px-4 py-2.5 text-right whitespace-nowrap">
                             <a href="{{ route('admin.stores.show', $store) }}" class="text-sm text-tinta/70 font-medium hover:underline">Detail</a>
-                            <button wire:click="edit({{ $store->id }})" class="ml-3 text-sm text-daun font-medium hover:underline">Ubah</button>
-                            <button wire:click="startMove({{ $store->id }})" class="ml-3 text-sm text-kunyit font-medium hover:underline">Pindahkan</button>
+                            @if (! $trashed)
+                                <button wire:click="edit({{ $store->id }})" class="ml-3 text-sm text-daun font-medium hover:underline">Ubah</button>
+                                <button wire:click="startMove({{ $store->id }})" class="ml-3 text-sm text-kunyit font-medium hover:underline">Pindahkan</button>
+                                <button wire:click="delete({{ $store->id }})"
+                                        wire:confirm="Hapus toko ini? Riwayat kunjungan tetap tersimpan dan toko bisa dipulihkan nanti."
+                                        class="ml-3 text-sm text-bata font-medium hover:underline">Hapus</button>
+                            @else
+                                <button wire:click="restore({{ $store->id }})" class="ml-3 text-sm text-daun font-medium hover:underline">Pulihkan</button>
+                            @endif
                         </td>
                     </tr>
                     @if ($movingId === $store->id)

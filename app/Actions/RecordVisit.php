@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Visit;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -49,7 +50,7 @@ class RecordVisit
                     throw ValidationException::withMessages([
                         "items.{$productId}.qty_found" => sprintf(
                             'Sisa %s (%d) tidak boleh lebih besar dari titipan sebelumnya (%d). Cek ulang hitungan.',
-                            Product::find($productId)?->name ?? "produk #{$productId}",
+                            Product::withTrashed()->find($productId)?->name ?? "produk #{$productId}",
                             $found,
                             $before,
                         ),
@@ -120,7 +121,7 @@ class RecordVisit
      * Kunjungan terakhir dipakai sebagai baseline kunjungan berikutnya, jadi ia
      * harus jadi snapshot lengkap: produk yang masih punya sisa wajib dihitung.
      */
-    private function assertNothingLeftOut(\Illuminate\Support\Collection $baseline, array $rows): void
+    private function assertNothingLeftOut(Collection $baseline, array $rows): void
     {
         $missing = $baseline
             ->filter(fn ($qty) => $qty > 0)
@@ -128,7 +129,7 @@ class RecordVisit
             ->reject(fn ($productId) => array_key_exists((int) $productId, $rows));
 
         if ($missing->isNotEmpty()) {
-            $names = Product::whereIn('id', $missing)->pluck('name')->implode(', ');
+            $names = Product::withTrashed()->whereIn('id', $missing)->pluck('name')->implode(', ');
 
             throw ValidationException::withMessages([
                 'items' => "Produk masih punya sisa dan wajib dihitung: {$names}.",

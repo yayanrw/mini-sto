@@ -1,11 +1,20 @@
 <div class="space-y-4">
-    <h1 class="text-2xl font-bold tracking-tight">Produk</h1>
+    <div class="flex items-baseline justify-between gap-3">
+        <h1 class="text-2xl font-bold tracking-tight">Produk</h1>
+        <button type="button" wire:click="toggleTrashed" class="tombol text-sm whitespace-nowrap">
+            {{ $trashed ? 'Lihat aktif' : 'Lihat sampah' }}
+        </button>
+    </div>
 
     @if (session('status'))
         <p class="rounded-xl bg-daun/10 border border-daun/25 text-daun text-sm px-3 py-2">{{ session('status') }}</p>
     @endif
 
-    <form wire:submit="save" class="kartu grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+    @if (session('error'))
+        <p class="rounded-xl bg-bata/10 border border-bata/25 text-bata text-sm px-3 py-2">{{ session('error') }}</p>
+    @endif
+
+    <form wire:submit="save" wire:confirm="Simpan perubahan ini?" class="kartu grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
         <div class="lg:col-span-2">
             <label class="block label-kecil mb-1">Nama produk</label>
             <input wire:model="name" type="text" class="isian isian-kecil">
@@ -55,7 +64,14 @@
                             </span>
                         </td>
                         <td class="px-4 py-2.5 text-right">
-                            <button wire:click="edit({{ $product->id }})" class="text-sm text-daun font-medium hover:underline">Ubah</button>
+                            @if (! $trashed)
+                                <button wire:click="edit({{ $product->id }})" class="text-sm text-daun font-medium hover:underline">Ubah</button>
+                                <button wire:click="delete({{ $product->id }})"
+                                        wire:confirm="Hapus produk ini? Produk hanya bisa dihapus jika tidak ada sisa titipan di toko manapun."
+                                        class="ml-3 text-sm text-bata font-medium hover:underline">Hapus</button>
+                            @else
+                                <button wire:click="restore({{ $product->id }})" class="text-sm text-daun font-medium hover:underline">Pulihkan</button>
+                            @endif
                         </td>
                     </tr>
                 @endforeach
