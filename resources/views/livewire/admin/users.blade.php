@@ -5,7 +5,7 @@
         <p class="rounded-xl bg-daun/10 border border-daun/25 text-daun text-sm px-3 py-2">{{ session('status') }}</p>
     @endif
 
-    <form wire:submit="save" class="kartu grid sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+    <form wire:submit="save" class="kartu grid sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
         <div>
             <label class="block label-kecil mb-1">Nama</label>
             <input wire:model="name" type="text" class="isian isian-kecil">
@@ -24,11 +24,16 @@
             <label class="block label-kecil mb-1">Role</label>
             <select wire:model="role" class="isian isian-kecil">
                 <option value="sales">Sales</option>
-                <option value="admin">Admin</option>
+                <option value="admin">Koordinator Area</option>
                 @if (auth()->user()->isSuperadmin())
                     <option value="superadmin">Superadmin</option>
                 @endif
             </select>
+        </div>
+        <div>
+            <label class="block label-kecil mb-1">Area</label>
+            <x-area-input model="area" />
+            @error('area') <p class="mt-1 text-xs text-bata">{{ $message }}</p> @enderror
         </div>
         <div>
             <label class="block label-kecil mb-1">{{ $editingId ? 'Kata sandi baru' : 'Kata sandi' }}</label>
@@ -42,7 +47,7 @@
                 <button type="button" wire:click="cancel" class="tombol">Batal</button>
             @endif
         </div>
-        <label class="flex items-center gap-2.5 text-sm text-tinta/70 lg:col-span-6">
+        <label class="flex items-center gap-2.5 text-sm text-tinta/70 lg:col-span-7">
             <input wire:model="active" type="checkbox" class="size-4 rounded border-tinta/30 accent-daun">
             Aktif — boleh masuk ke aplikasi
         </label>
@@ -56,6 +61,7 @@
                     <th class="text-left font-normal px-4 py-3">Email</th>
                     <th class="text-left font-normal px-4 py-3">HP</th>
                     <th class="text-left font-normal px-4 py-3">Role</th>
+                    <th class="text-left font-normal px-4 py-3">Area</th>
                     <th class="text-left font-normal px-4 py-3">Status</th>
                     <th class="px-4 py-3"></th>
                 </tr>
@@ -66,7 +72,10 @@
                         <td class="px-4 py-2.5 font-medium">{{ $user->name }}</td>
                         <td class="px-4 py-2.5 text-tinta/70">{{ $user->email }}</td>
                         <td class="px-4 py-2.5 text-tinta/70">{{ $user->phone ?: '—' }}</td>
-                        <td class="px-4 py-2.5">{{ ucfirst($user->role) }}</td>
+                        <td class="px-4 py-2.5">{{ $user->roleLabel() }}</td>
+                        <td class="px-4 py-2.5">
+                            @if ($user->area) {{ $user->area }} @else <span class="text-tinta/50">Tanpa area</span> @endif
+                        </td>
                         <td class="px-4 py-2.5">
                             <span class="rounded-full px-2 py-0.5 text-xs {{ $user->active ? 'bg-daun/12 text-daun font-medium' : 'bg-tinta/8 text-tinta/70' }}">
                                 {{ $user->active ? 'Aktif' : 'Nonaktif' }}

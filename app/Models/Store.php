@@ -16,7 +16,7 @@ class Store extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name', 'owner_name', 'phone', 'address',
+        'name', 'owner_name', 'phone', 'address', 'area',
         'lat', 'lng', 'photo_path', 'created_by', 'active',
     ];
 
@@ -69,5 +69,29 @@ class Store extends Model
             )
             ->whereNotNull('lat')
             ->orderBy('distance_km');
+    }
+
+    /** Toko yang boleh dilihat $viewer. Lihat catatan null di User::scopeVisibleTo. */
+    public function scopeVisibleTo(Builder $query, User $viewer): Builder
+    {
+        if ($viewer->isSuperadmin()) {
+            return $query;
+        }
+
+        if (! $viewer->isKoordinator() || $viewer->area === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('stores.area', $viewer->area);
+    }
+
+    /**
+     * Subquery id toko yang terlihat, untuk membatasi query kunjungan.
+     * withTrashed: kunjungan dari toko yang dihapus tetap terhitung di laporan,
+     * sama seperti yang dilihat superadmin.
+     */
+    public static function visibleIds(User $viewer): Builder
+    {
+        return static::withTrashed()->visibleTo($viewer)->select('stores.id');
     }
 }

@@ -40,7 +40,7 @@ class StoreCreate extends Component
             return;
         }
 
-        abort_unless($store->created_by === auth()->id() || auth()->user()->isAdmin(), 403);
+        abort_unless($store->created_by === auth()->id() || auth()->user()->canAccessArea($store->area), 403);
 
         $this->editing = $store;
         $this->name = $store->name;
@@ -83,6 +83,8 @@ class StoreCreate extends Component
     public function save()
     {
         $data = $this->validate();
+        $user = auth()->user();
+        $isAdmin = $user->isAdmin();
 
         $attributes = [
             'name' => $data['name'],
@@ -93,17 +95,28 @@ class StoreCreate extends Component
             'lng' => $data['lng'] !== null && $data['lng'] !== '' ? $data['lng'] : null,
         ];
 
+        $assignee = null;
+
+        if ($isAdmin) {
+            $assignee = User::where('role', 'sales')->findOrFail($data['assignedTo']);
+
+            // Koordinator hanya boleh menugaskan toko ke sales di areanya sendiri.
+            abort_unless($user->canAccessArea($assignee->area), 403);
+
+            $attributes['created_by'] = $assignee->id;
+        }
+
         if ($this->photo) {
             $attributes['photo_path'] = $this->photo->store('stores', 'public');
         }
 
-        $isAdmin = auth()->user()->isAdmin();
-
-        if ($isAdmin) {
-            $attributes['created_by'] = $data['assignedTo'];
-        }
-
         if ($this->editing) {
+            // Area toko ikut sales baru hanya saat toko benar-benar berpindah tangan;
+            // mengubah area sales tidak menggeser riwayat toko lamanya.
+            if ($assignee && $this->editing->created_by !== $assignee->id) {
+                $attributes['area'] = $assignee->area;
+            }
+
             $this->editing->update($attributes);
 
             session()->flash('status', "Toko “{$this->editing->name}” diperbarui.");
@@ -116,6 +129,7 @@ class StoreCreate extends Component
         $store = Store::create([
             ...$attributes,
             'created_by' => $attributes['created_by'] ?? auth()->id(),
+            'area' => $assignee ? $assignee->area : $user->area,
         ]);
 
         if ($isAdmin) {
@@ -133,7 +147,7 @@ class StoreCreate extends Component
     {
         return view('livewire.sales.store-create', [
             'salesOptions' => auth()->user()->isAdmin()
-                ? User::where('role', 'sales')->orderBy('name')->get()
+                ? User::visibleTo(auth()->user())->where('role', 'sales')->orderBy('name')->get()
                 : collect(),
         ]);
     }

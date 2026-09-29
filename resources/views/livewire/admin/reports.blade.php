@@ -1,10 +1,11 @@
 <div class="space-y-4">
     <div class="flex items-baseline justify-between gap-3">
-        <h1 class="text-2xl font-bold tracking-tight">Report</h1>
+        <h1 class="text-2xl font-bold tracking-tight">Report{{ auth()->user()->areaSuffix() }}</h1>
         <a href="{{ route('admin.reports.csv', $this->filters()) }}" class="tombol text-sm">Export CSV</a>
     </div>
 
-    <div class="kartu grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <div class="kartu grid sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <x-area-filter />
         <div>
             <label class="block label-kecil mb-1">Dari</label>
             <input wire:model.live="from" type="date" class="isian isian-kecil">

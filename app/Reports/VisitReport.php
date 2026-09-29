@@ -2,6 +2,8 @@
 
 namespace App\Reports;
 
+use App\Models\Store;
+use App\Models\User;
 use App\Models\VisitItem;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,10 +14,13 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class VisitReport
 {
-    /** @param array{from?:string, to?:string, user_id?:string|int, product_id?:string|int, store_id?:string|int} $filters */
-    public static function query(array $filters): Builder
+    /**
+     * @param  array{from?:string, to?:string, user_id?:string|int, product_id?:string|int, store_id?:string|int, area?:string}  $filters
+     * @param  User|null  $viewer  Membatasi ke toko yang boleh dilihatnya; null = tanpa batas.
+     */
+    public static function query(array $filters, ?User $viewer = null): Builder
     {
-        return static::base($filters)
+        return static::base($filters, $viewer)
             ->orderByDesc('visits.visited_at')
             ->select([
                 'visit_items.*',
@@ -31,18 +36,18 @@ class VisitReport
      * Total agregat dengan filter yang sama. Query terpisah, bukan clone dari
      * query(): daftar kolom mentahnya melanggar ONLY_FULL_GROUP_BY di MySQL.
      */
-    public static function totals(array $filters): object
+    public static function totals(array $filters, ?User $viewer = null): object
     {
         // Sengaja tanpa total qty_left: menjumlahkannya lintas kunjungan tidak
         // berarti apa-apa (stok yang sama dihitung berkali-kali).
-        return static::base($filters)->selectRaw(
+        return static::base($filters, $viewer)->selectRaw(
             'COALESCE(SUM(qty_sold), 0) as sold,
              COALESCE(SUM(qty_added), 0) as added,
              COUNT(DISTINCT visits.id) as visit_count'
         )->first();
     }
 
-    private static function base(array $filters): Builder
+    private static function base(array $filters, ?User $viewer): Builder
     {
         $from = Carbon::parse($filters['from'] ?? now()->startOfMonth())->startOfDay();
         $to = Carbon::parse($filters['to'] ?? now())->endOfDay();
@@ -53,6 +58,9 @@ class VisitReport
             ->join('products', 'products.id', '=', 'visit_items.product_id')
             ->join('users', 'users.id', '=', 'visits.user_id')
             ->whereBetween('visits.visited_at', [$from, $to])
+            // Viewer null = tanpa pembatasan (tes lama); koordinator dibatasi ke tokonya sendiri.
+            ->when($viewer, fn ($q) => $q->whereIn('visits.store_id', Store::visibleIds($viewer)))
+            ->when($filters['area'] ?? null, fn ($q, $area) => $q->where('stores.area', $area))
             ->when($filters['user_id'] ?? null, fn ($q, $id) => $q->where('visits.user_id', $id))
             ->when($filters['product_id'] ?? null, fn ($q, $id) => $q->where('visit_items.product_id', $id))
             ->when($filters['store_id'] ?? null, fn ($q, $id) => $q->where('visits.store_id', $id));

@@ -1,7 +1,8 @@
 <div class="space-y-4">
     <div class="flex items-baseline justify-between gap-3">
-        <h1 class="text-2xl font-bold tracking-tight">Toko</h1>
-        <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold tracking-tight">Toko{{ auth()->user()->areaSuffix() }}</h1>
+        <div class="flex items-end gap-2">
+            <x-area-filter />
             <input type="search" wire:model.live.debounce.400ms="search" placeholder="Cari toko"
                    class="isian isian-kecil w-auto">
             <button type="button" wire:click="toggleTrashed" class="tombol text-sm whitespace-nowrap">
@@ -65,6 +66,7 @@
                 <tr>
                     <th class="text-left font-normal px-4 py-3">Toko</th>
                     <th class="text-left font-normal px-4 py-3">Pemilik</th>
+                    <th class="text-left font-normal px-4 py-3">Area</th>
                     <th class="text-left font-normal px-4 py-3">Titik lokasi</th>
                     <th class="text-left font-normal px-4 py-3">Kunjungan terakhir</th>
                     <th class="text-left font-normal px-4 py-3">Didaftarkan</th>
@@ -80,6 +82,9 @@
                             <p class="label-kecil">{{ $store->address ?: '—' }}</p>
                         </td>
                         <td class="px-4 py-2.5 text-tinta/70">{{ $store->owner_name ?: '—' }}</td>
+                        <td class="px-4 py-2.5 text-tinta/70">
+                            @if ($store->area) {{ $store->area }} @else <span class="text-tinta/50">Tanpa area</span> @endif
+                        </td>
                         <td class="px-4 py-2.5 text-xs tabular-nums">
                             @if ($store->lat)
                                 <span class="text-tinta/70">{{ number_format($store->lat, 5) }}, {{ number_format($store->lng, 5) }}</span>
@@ -116,7 +121,7 @@
                     </tr>
                     @if ($movingId === $store->id)
                         <tr wire:key="move-{{ $store->id }}">
-                            <td colspan="7" class="px-4 py-3 bg-kunyit/5">
+                            <td colspan="8" class="px-4 py-3 bg-kunyit/5">
                                 <form wire:submit="moveStore" class="flex flex-wrap items-end gap-3">
                                     <p class="w-full text-sm">
                                         Pindahkan <strong>{{ $store->name }}</strong> ke sales:
@@ -137,7 +142,7 @@
                         </tr>
                     @endif
                 @empty
-                    <tr><td colspan="7" class="px-4 py-8 text-center text-tinta/70">Belum ada toko. Sales menambahkannya dari aplikasi.</td></tr>
+                    <tr><td colspan="8" class="px-4 py-8 text-center text-tinta/70">Belum ada toko. Sales menambahkannya dari aplikasi.</td></tr>
                 @endforelse
             </tbody>
         </table>

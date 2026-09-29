@@ -20,6 +20,9 @@ class Stores extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    #[Url(except: '')]
+    public string $area = '';
+
     public ?int $editingId = null;
 
     public string $name = '';
@@ -47,9 +50,24 @@ class Stores extends Component
         $this->resetPage();
     }
 
+    public function updatedArea(): void
+    {
+        $this->resetPage();
+    }
+
+    /** Ambil toko dan pastikan pengguna boleh menyentuh areanya. id datang dari client, jadi selalu dicek. */
+    private function authorizedStore(int $id, bool $trashed = false): Store
+    {
+        $store = ($trashed ? Store::onlyTrashed() : Store::query())->findOrFail($id);
+
+        abort_unless(auth()->user()->canAccessArea($store->area), 403);
+
+        return $store;
+    }
+
     public function edit(int $id): void
     {
-        $store = Store::findOrFail($id);
+        $store = $this->authorizedStore($id);
 
         $this->editingId = $store->id;
         $this->name = $store->name;
@@ -69,6 +87,9 @@ class Stores extends Component
 
     public function save(): void
     {
+        // editingId adalah properti publik yang bisa dimanipulasi client: cek ulang di sini.
+        $store = $this->authorizedStore((int) $this->editingId);
+
         $data = $this->validate([
             'name' => 'required|string|max:120',
             'owner_name' => 'nullable|string|max:120',
@@ -79,7 +100,7 @@ class Stores extends Component
             'active' => 'boolean',
         ]);
 
-        Store::findOrFail($this->editingId)->update([
+        $store->update([
             ...$data,
             'owner_name' => $data['owner_name'] ?: null,
             'phone' => $data['phone'] ?: null,
@@ -112,10 +133,12 @@ class Stores extends Component
             'moveToId' => ['required', Rule::exists('users', 'id')->where('role', 'sales')],
         ]);
 
-        $store = Store::findOrFail($this->movingId);
-        $to = User::where('role', 'sales')->findOrFail($data['moveToId']);
+        $store = $this->authorizedStore((int) $this->movingId);
+        // Target hanya sales yang terlihat oleh pengguna ini (koordinator: sales di areanya).
+        $to = User::visibleTo(auth()->user())->where('role', 'sales')->findOrFail($data['moveToId']);
 
-        $store->update(['created_by' => $to->id]);
+        // Area toko ikut sales tujuan (null kalau sales tujuan belum punya area).
+        $store->update(['created_by' => $to->id, 'area' => $to->area]);
 
         session()->flash('status', "Toko “{$store->name}” dipindahkan ke {$to->name}.");
 
@@ -130,7 +153,7 @@ class Stores extends Component
 
     public function delete(int $id): void
     {
-        $store = Store::findOrFail($id);
+        $store = $this->authorizedStore($id);
         $store->delete();
 
         session()->flash('status', "Toko \"{$store->name}\" dihapus.");
@@ -138,7 +161,7 @@ class Stores extends Component
 
     public function restore(int $id): void
     {
-        $store = Store::onlyTrashed()->findOrFail($id);
+        $store = $this->authorizedStore($id, trashed: true);
         $store->restore();
 
         session()->flash('status', "Toko \"{$store->name}\" dipulihkan.");
@@ -146,7 +169,12 @@ class Stores extends Component
 
     public function render()
     {
+        $viewer = auth()->user();
+
         $stores = Store::query()
+            ->visibleTo($viewer)
+            // Filter area hanya bermakna untuk superadmin; koordinator sudah terbatas oleh visibleTo.
+            ->when($viewer->isSuperadmin() && $this->area !== '', fn ($q) => $q->where('stores.area', $this->area))
             ->when($this->trashed, fn ($q) => $q->onlyTrashed())
             ->with(['latestVisit.user', 'creator'])
             ->when($this->search !== '', fn ($q) => $q->where(function ($q) {
@@ -160,7 +188,7 @@ class Stores extends Component
         return view('livewire.admin.stores', [
             'stores' => $stores,
             'moveTargets' => $this->movingId
-                ? User::where('role', 'sales')->orderBy('name')->get()
+                ? User::visibleTo($viewer)->where('role', 'sales')->orderBy('name')->get()
                 : collect(),
         ]);
     }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReportCsvController;
+use App\Livewire\Admin\Areas;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\MapView;
 use App\Livewire\Admin\Performance;
@@ -42,7 +43,12 @@ Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group
     Route::get('report/csv', ReportCsvController::class)->name('reports.csv');
     Route::get('toko', AdminStores::class)->name('stores');
     Route::get('toko/{store}', StoreShow::class)->name('stores.show');
-    Route::get('produk', Products::class)->name('products');
     Route::get('sales', AdminSales::class)->name('sales');
+});
+
+// Master data dan manajemen akun: hanya superadmin. Koordinator Area tidak masuk sini.
+Route::middleware(['auth', 'can:superadmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('produk', Products::class)->name('products');
     Route::get('pengguna', Users::class)->name('users');
+    Route::get('area', Areas::class)->name('areas');
 });

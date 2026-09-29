@@ -36,9 +36,10 @@
             'admin.stores' => 'Toko',
             'admin.products' => 'Produk',
             'admin.sales' => 'Sales',
+            'admin.areas' => 'Area',
             'admin.users' => 'Pengguna',
             ] as $route => $label)
-            @continue($route === 'admin.users' && ! $user->isSuperadmin())
+            @continue(in_array($route, ['admin.users', 'admin.products', 'admin.areas'], true) && ! $user->isSuperadmin())
             <a href="{{ route($route) }}"
                 class="shrink-0 px-3 py-2.5 border-b-2 {{ request()->routeIs($route) ? 'border-daun text-daun font-semibold' : 'border-transparent text-tinta/70 hover:text-tinta' }}">
                 {{ $label }}

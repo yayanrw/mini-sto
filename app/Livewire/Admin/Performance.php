@@ -22,6 +22,9 @@ class Performance extends Component
     #[Url]
     public string $to = '';
 
+    #[Url]
+    public string $area = '';
+
     public function mount(): void
     {
         $this->from = $this->from ?: now()->startOfMonth()->toDateString();
@@ -35,9 +38,16 @@ class Performance extends Component
             Carbon::parse($this->to)->endOfDay(),
         ];
 
+        $viewer = auth()->user();
+        // Filter area hanya bermakna untuk superadmin; koordinator sudah terbatas oleh visibleTo.
+        $area = $viewer->isSuperadmin() ? $this->area : '';
+
         $visitStats = Visit::query()
+            ->join('stores', 'stores.id', '=', 'visits.store_id')
             ->leftJoin('visit_items', 'visit_items.visit_id', '=', 'visits.id')
             ->whereBetween('visits.visited_at', $range)
+            ->whereIn('visits.store_id', Store::visibleIds($viewer))
+            ->when($area !== '', fn ($q) => $q->where('stores.area', $area))
             ->groupBy('visits.user_id')
             ->get([
                 'visits.user_id',
@@ -49,12 +59,16 @@ class Performance extends Component
             ->keyBy('user_id');
 
         $newStores = Store::query()
+            ->visibleTo($viewer)
+            ->when($area !== '', fn ($q) => $q->where('stores.area', $area))
             ->whereBetween('created_at', $range)
             ->whereNotNull('created_by')
             ->groupBy('created_by')
             ->pluck(DB::raw('COUNT(*)'), 'created_by');
 
         $rows = User::query()
+            ->visibleTo($viewer)
+            ->when($area !== '', fn ($q) => $q->where('users.area', $area))
             ->orderBy('name')
             ->get()
             ->map(fn (User $user) => [

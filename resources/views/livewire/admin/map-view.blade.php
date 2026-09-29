@@ -8,7 +8,18 @@
     @endpush
 
     <div class="flex items-baseline justify-between gap-3">
-        <h1 class="text-2xl font-bold tracking-tight">Peta Toko</h1>
+        <h1 class="text-2xl font-bold tracking-tight">Peta Toko{{ auth()->user()->areaSuffix() }}</h1>
+        {{-- Form GET biasa: marker dirender sekali di wire:ignore, jadi filter perlu muat ulang halaman. --}}
+        @if (auth()->user()->isSuperadmin())
+            <form method="GET">
+                <select name="area" onchange="this.form.submit()" class="isian isian-kecil w-auto">
+                    <option value="">Semua area</option>
+                    @foreach (\App\Support\Areas::all() as $a)
+                        <option value="{{ $a }}" @selected($area === $a)>{{ $a }}</option>
+                    @endforeach
+                </select>
+            </form>
+        @endif
         <p class="text-sm text-tinta/70">
             {{ count($markers) }} toko bertitik lokasi
             @if ($missingCoords) · <span class="text-kunyit font-medium">{{ $missingCoords }} belum</span> @endif

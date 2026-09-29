@@ -1,11 +1,14 @@
 <div class="space-y-4">
-    <h1 class="text-2xl font-bold tracking-tight">Sales</h1>
+    <div class="flex items-end justify-between gap-3">
+        <h1 class="text-2xl font-bold tracking-tight">Sales{{ auth()->user()->areaSuffix() }}</h1>
+        <x-area-filter model="filterArea" />
+    </div>
 
     @if (session('status'))
         <p class="rounded-xl bg-daun/10 border border-daun/25 text-daun text-sm px-3 py-2">{{ session('status') }}</p>
     @endif
 
-    <form wire:submit="save" class="kartu grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+    <form wire:submit="save" class="kartu grid sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
         <div>
             <label class="block label-kecil mb-1">Nama</label>
             <input wire:model="name" type="text" class="isian isian-kecil">
@@ -26,13 +29,25 @@
                    class="isian isian-kecil">
             @error('password') <p class="mt-1 text-xs text-bata">{{ $message }}</p> @enderror
         </div>
+        @if (auth()->user()->isSuperadmin())
+            <div>
+                <label class="block label-kecil mb-1">Area</label>
+                <x-area-input model="area" />
+                @error('area') <p class="mt-1 text-xs text-bata">{{ $message }}</p> @enderror
+            </div>
+        @elseif (auth()->user()->area)
+            <p class="text-sm text-tinta/70">Area: <strong>{{ auth()->user()->area }}</strong></p>
+        @else
+            <p class="text-sm text-bata">Area kamu belum diatur, hubungi superadmin.</p>
+        @endif
         <div class="flex gap-2">
-            <button class="tombol tombol-utama flex-1">{{ $editingId ? 'Perbarui' : 'Tambah' }}</button>
+            <button @disabled(! auth()->user()->isSuperadmin() && ! auth()->user()->area)
+                    class="tombol tombol-utama flex-1">{{ $editingId ? 'Perbarui' : 'Tambah' }}</button>
             @if ($editingId)
                 <button type="button" wire:click="cancel" class="tombol">Batal</button>
             @endif
         </div>
-        <label class="flex items-center gap-2.5 text-sm text-tinta/70 lg:col-span-5">
+        <label class="flex items-center gap-2.5 text-sm text-tinta/70 lg:col-span-6">
             <input wire:model="active" type="checkbox" class="size-4 rounded border-tinta/30 accent-daun">
             Aktif — boleh masuk ke aplikasi
         </label>
@@ -45,6 +60,7 @@
                     <th class="text-left font-normal px-4 py-3">Nama</th>
                     <th class="text-left font-normal px-4 py-3">Email</th>
                     <th class="text-left font-normal px-4 py-3">HP</th>
+                    <th class="text-left font-normal px-4 py-3">Area</th>
                     <th class="text-right font-normal px-4 py-3">Toko</th>
                     <th class="text-left font-normal px-4 py-3">Status</th>
                     <th class="px-4 py-3"></th>
@@ -57,6 +73,9 @@
                         <td class="px-4 py-2.5 font-medium">{{ $user->name }}</td>
                         <td class="px-4 py-2.5 text-tinta/70">{{ $user->email }}</td>
                         <td class="px-4 py-2.5 text-tinta/70">{{ $user->phone ?: '—' }}</td>
+                        <td class="px-4 py-2.5 text-tinta/70">
+                            @if ($user->area) {{ $user->area }} @else <span class="text-tinta/50">Tanpa area</span> @endif
+                        </td>
                         <td class="px-4 py-2.5 text-right tabular-nums">{{ $storeCount }}</td>
                         <td class="px-4 py-2.5">
                             <span class="rounded-full px-2 py-0.5 text-xs {{ $user->active ? 'bg-daun/12 text-daun font-medium' : 'bg-tinta/8 text-tinta/70' }}">
@@ -72,7 +91,7 @@
                     </tr>
                     @if ($movingFromId === $user->id)
                         <tr wire:key="move-{{ $user->id }}">
-                            <td colspan="6" class="px-4 py-3 bg-kunyit/5">
+                            <td colspan="7" class="px-4 py-3 bg-kunyit/5">
                                 <form wire:submit="moveStores" class="flex flex-wrap items-end gap-3">
                                     <p class="w-full text-sm">
                                         Pindahkan <strong>{{ $storeCount }}</strong> toko milik <strong>{{ $user->name }}</strong> ke:
@@ -93,7 +112,7 @@
                         </tr>
                     @endif
                 @empty
-                    <tr><td colspan="6" class="px-4 py-8 text-center text-tinta/70">Belum ada sales.</td></tr>
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-tinta/70">Belum ada sales.</td></tr>
                 @endforelse
             </tbody>
         </table>

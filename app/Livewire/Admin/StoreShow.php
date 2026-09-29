@@ -18,6 +18,8 @@ class StoreShow extends Component
 
     public function mount(Store $store): void
     {
+        abort_unless(auth()->user()->canAccessArea($store->area), 403);
+
         $this->store = $store;
     }
 

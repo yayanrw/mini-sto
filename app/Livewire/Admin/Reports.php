@@ -33,6 +33,9 @@ class Reports extends Component
     #[Url]
     public string $store_id = '';
 
+    #[Url]
+    public string $area = '';
+
     public function mount(): void
     {
         $this->from = $this->from ?: now()->startOfMonth()->toDateString();
@@ -52,17 +55,20 @@ class Reports extends Component
             'user_id' => $this->user_id,
             'product_id' => $this->product_id,
             'store_id' => $this->store_id,
+            'area' => $this->area,
         ];
     }
 
     public function render()
     {
+        $viewer = auth()->user();
+
         return view('livewire.admin.reports', [
-            'rows' => VisitReport::query($this->filters())->paginate(30),
-            'totals' => VisitReport::totals($this->filters()),
-            'salesUsers' => User::orderBy('name')->get(['id', 'name']),
+            'rows' => VisitReport::query($this->filters(), $viewer)->paginate(30),
+            'totals' => VisitReport::totals($this->filters(), $viewer),
+            'salesUsers' => User::visibleTo($viewer)->orderBy('name')->get(['id', 'name']),
             'products' => Product::orderBy('name')->get(['id', 'name']),
-            'stores' => Store::orderBy('name')->get(['id', 'name']),
+            'stores' => Store::visibleTo($viewer)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 }

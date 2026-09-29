@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\User;
+use App\Support\Areas;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
@@ -26,6 +27,8 @@ class Users extends Component
 
     public string $role = 'sales';
 
+    public string $area = '';
+
     public string $password = '';
 
     public bool $active = true;
@@ -46,6 +49,7 @@ class Users extends Component
         $this->email = $user->email;
         $this->phone = $user->phone ?? '';
         $this->role = $user->role;
+        $this->area = $user->area ?? '';
         $this->active = $user->active;
         $this->password = '';
     }
@@ -58,7 +62,7 @@ class Users extends Component
 
     public function cancel(): void
     {
-        $this->reset('editingId', 'name', 'email', 'phone', 'role', 'password', 'active');
+        $this->reset('editingId', 'name', 'email', 'phone', 'role', 'area', 'password', 'active');
         $this->resetValidation();
     }
 
@@ -79,9 +83,12 @@ class Users extends Component
             'email' => 'required|email|max:190|unique:users,email'.($this->editingId ? ",{$this->editingId}" : ''),
             'phone' => 'nullable|string|max:30',
             'role' => ['required', Rule::in($this->assignableRoles())],
+            'area' => ['nullable', Areas::rule()],
             'active' => 'boolean',
             'password' => [$this->editingId ? 'nullable' : 'required', Password::min(8)],
         ]);
+
+        $data['area'] = $data['area'] ?: null;
 
         if ($data['password'] === '' || $data['password'] === null) {
             unset($data['password']);

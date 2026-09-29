@@ -5,15 +5,28 @@ namespace App\Livewire\Admin;
 use App\Models\Store;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('components.layout')]
 #[Title('Peta Toko')]
 class MapView extends Component
 {
+    #[Url]
+    public string $area = '';
+
     public function render()
     {
+        $viewer = auth()->user();
+        // Filter area hanya bermakna untuk superadmin; koordinator sudah terbatas oleh visibleTo.
+        $inArea = fn ($q) => $q->when(
+            $viewer->isSuperadmin() && $this->area !== '',
+            fn ($q) => $q->where('stores.area', $this->area),
+        );
+
         $markers = Store::query()
+            ->visibleTo($viewer)
+            ->tap($inArea)
             ->where('active', true)
             ->whereNotNull('lat')
             ->with(['latestVisit.items.product', 'latestVisit.user', 'creator'])
@@ -38,7 +51,7 @@ class MapView extends Component
 
         return view('livewire.admin.map-view', [
             'markers' => $markers,
-            'missingCoords' => Store::where('active', true)->whereNull('lat')->count(),
+            'missingCoords' => Store::visibleTo($viewer)->tap($inArea)->where('active', true)->whereNull('lat')->count(),
         ]);
     }
 }

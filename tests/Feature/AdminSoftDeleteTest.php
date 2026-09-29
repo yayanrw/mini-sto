@@ -25,7 +25,7 @@ class AdminSoftDeleteTest extends TestCase
         parent::setUp();
 
         $this->admin = User::create([
-            'name' => 'Admin', 'email' => 'admin@test.local', 'password' => 'password', 'role' => 'admin',
+            'name' => 'Admin', 'email' => 'admin@test.local', 'password' => 'password', 'role' => 'superadmin',
         ]);
         $this->sales = User::create([
             'name' => 'Budi', 'email' => 'budi@test.local', 'password' => 'password', 'role' => 'sales',

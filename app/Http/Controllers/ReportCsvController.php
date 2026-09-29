@@ -10,10 +10,11 @@ class ReportCsvController extends Controller
 {
     public function __invoke(Request $request): StreamedResponse
     {
-        $filters = $request->only(['from', 'to', 'user_id', 'product_id', 'store_id']);
+        $filters = $request->only(['from', 'to', 'user_id', 'product_id', 'store_id', 'area']);
+        $viewer = $request->user();
         $filename = 'report-kunjungan-'.now()->format('Ymd-Hi').'.csv';
 
-        return response()->streamDownload(function () use ($filters) {
+        return response()->streamDownload(function () use ($filters, $viewer) {
             $out = fopen('php://output', 'w');
 
             // BOM supaya Excel Windows membaca UTF-8 dengan benar.
@@ -22,7 +23,7 @@ class ReportCsvController extends Controller
 
             // chunkById, bukan chunk: urutan tanggal tidak unik sehingga paging
             // biasa bisa melewati baris.
-            VisitReport::query($filters)->reorder()->chunkById(500, function ($rows) use ($out) {
+            VisitReport::query($filters, $viewer)->reorder()->chunkById(500, function ($rows) use ($out) {
                 foreach ($rows as $row) {
                     fputcsv($out, [
                         $row->visited_at->format('Y-m-d H:i'),
