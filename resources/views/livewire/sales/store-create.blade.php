@@ -5,6 +5,8 @@
     @push('head')
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
         <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"
+                integrity="sha384-KRanV2NRwHPanp7iM6nlLQC5jPCTscSYMko30dLJHzNXJaUNtcucWv+SOi3jV3PE" crossorigin="anonymous"></script>
     @endpush
 
     @php($kembali = $editing
@@ -50,7 +52,25 @@
                 <textarea wire:model="address" rows="2" class="isian"></textarea>
             </div>
 
-            <div x-data="{ preview: @js($editing?->photo_path ? \Illuminate\Support\Facades\Storage::url($editing->photo_path) : null) }">
+            <div x-data="{
+                preview: @js($editing?->photo_path ? \Illuminate\Support\Facades\Storage::url($editing->photo_path) : null),
+                // Baca GPS dari EXIF foto lalu isi pin + alamat. Foto tanpa GPS (mis. iOS membuangnya) diabaikan.
+                async fromExif(file) {
+                    this.preview = file ? URL.createObjectURL(file) : null
+                    if (!file || !window.exifr) return
+                    const gps = await window.exifr.gps(file).catch(() => null)
+                    if (!gps?.latitude) return
+                    // Admin: EXIF selalu menimpa (pin bisa digeser lagi). Sales: hanya kalau GPS perangkat belum mengisi.
+                    if (!@js($isAdmin) && $wire.lat) return
+                    window.dispatchEvent(new CustomEvent('photo-gps', { detail: gps }))
+                    if ($wire.address) return
+                    try {
+                        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=id&lat=${gps.latitude}&lon=${gps.longitude}`)
+                        const alamat = (await r.json()).display_name
+                        if (alamat && !$wire.address) $wire.address = alamat
+                    } catch (e) {}
+                }
+            }">
                 <label class="block text-sm font-medium mb-1.5">
                     Foto toko @if ($wajib) <span class="text-bata">*</span> @endif
                 </label>
@@ -68,7 +88,7 @@
                     </template>
                     <img x-show="preview" :src="preview" class="w-full aspect-video object-cover rounded-[inherit]">
                     <input wire:model="photo" type="file" accept="image/*" capture="environment" class="sr-only"
-                           @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null">
+                           @change="fromExif($event.target.files[0])">
                 </label>
                 <div wire:loading wire:target="photo" class="mt-1 label-kecil">Mengunggah…</div>
                 @error('photo') <p class="mt-1 text-sm text-bata">{{ $message }}</p> @enderror
@@ -118,6 +138,7 @@
                  }"
                  x-init="$nextTick(() => window.L ? start() : window.addEventListener('load', () => start()))"
                  @locate-me.window="locate()"
+                 @photo-gps.window="place($event.detail.latitude, $event.detail.longitude)"
                  class="mt-3">
                 <div x-ref="map" class="h-56 w-full rounded-xl border border-tinta/15 z-0"></div>
             </div>
