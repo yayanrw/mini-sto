@@ -70,7 +70,7 @@ class StoreCreate extends Component
             'address' => 'nullable|string|max:500',
             'lat' => "{$required}|numeric|between:-90,90",
             'lng' => "{$required}|numeric|between:-180,180",
-            'photo' => "{$required}|image|max:4096",
+            'photo' => 'nullable|image|max:4096',
         ];
 
         if ($isAdmin) {

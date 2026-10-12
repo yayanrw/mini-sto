@@ -31,6 +31,19 @@ class AreaCopyTest extends TestCase
         $this->assertDatabaseHas('stores', ['name' => 'Toko Baru', 'area' => 'Kab. Malang', 'created_by' => $sales->id]);
     }
 
+    public function test_sales_bisa_membuat_toko_tanpa_foto(): void
+    {
+        $sales = $this->user('sales', 'Kab. Malang');
+
+        Livewire::actingAs($sales)->test(StoreCreate::class, ['store' => null])
+            ->set('name', 'Toko Tanpa Foto')
+            ->call('setLocation', -7.9, 112.6)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('stores', ['name' => 'Toko Tanpa Foto', 'photo_path' => null]);
+    }
+
     public function test_admin_membuat_toko_area_ikut_sales_yang_dipilih(): void
     {
         $sales = $this->user('sales', 'Kota Kediri');

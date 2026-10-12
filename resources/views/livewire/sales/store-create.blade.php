@@ -72,7 +72,7 @@
                 }
             }">
                 <label class="block text-sm font-medium mb-1.5">
-                    Foto toko @if ($wajib) <span class="text-bata">*</span> @endif
+                    Foto toko
                 </label>
                 <label
                     class="kartu-kosong flex flex-col items-center justify-center gap-1.5 cursor-pointer overflow-hidden"
