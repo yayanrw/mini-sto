@@ -26,7 +26,7 @@ class Visit extends Model
 
     public function store(): BelongsTo
     {
-        return $this->belongsTo(Store::class);
+        return $this->belongsTo(Store::class)->withTrashed(); // riwayat tetap tampil walau toko dihapus
     }
 
     public function user(): BelongsTo
